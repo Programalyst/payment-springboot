@@ -27,6 +27,15 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <!-- Restore Spring Boot 4's native web serializer -->
+        <!-- FIX runtime formContentFilter initialization crash caused by Spark requiring
+        Jackson 2 com.fasterxml.jackson.core
+        Maven attempted to resolve these dependencies within a single multi-module reactor. -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>3.0.0</version> <!-- Explicitly defining it overrides our Spark exclusions -->
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.kafka</groupId>

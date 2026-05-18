@@ -15,6 +15,8 @@ public class TransactionAnalyticsApp {
                 .appName("VisaTransactionAnalyticsEngine")
                 .master("local[*]") // Dynamically leverage all CPU cores on your Mac
                 .config("spark.ui.enabled", "false") // Disable Spark UI due to conflict with Spring Boot
+                .config("spark.driver.bindAddress", "127.0.0.1") // Force Spark to bind to local loopback interface
+                .config("spark.driver.host", "127.0.0.1")
                 .getOrCreate();
 
         // 2. Establish Structured Stream Connection to Local Kafka Container

@@ -1,12 +1,12 @@
 package com.demo.processor;
 
 import com.demo.processor.dto.PaymentRequest;
+import com.demo.processor.model.Transaction;
+import com.demo.processor.service.BatchProcessingManager;
 import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.stereotype.Controller;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
-
-import com.demo.processor.dto.TransactionResponse;
 
 import java.util.UUID;
 
@@ -14,35 +14,23 @@ import java.util.UUID;
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
 
-    @Value("${app.kafka.payment-topic}")
-    private String paymentTopic; // Injects "payment-topic"
+    private BatchProcessingManager batchManager;
 
-    private final PaymentService paymentService;
-
-    // Publish transaction messages directly to Kafka whenever a payment request is received
-    // KafkaTemplate is like HttpClient in .NET or Axios in JavaScript, but for Kafka
-    private final KafkaTemplate<String, TransactionResponse> kafkaTemplate;
-
-    // must explicitly tell Spring how to serialize TransactionResponse Record object with a Configuration Class
-    public PaymentController(PaymentService paymentService, KafkaTemplate<String, TransactionResponse> kafkaTemplate) {
-        this.paymentService = paymentService;
-        this.kafkaTemplate = kafkaTemplate;
-    }
-
-    @GetMapping("/{id}")
-    public TransactionResponse getPaymentStatus(@PathVariable String id) {
-        return paymentService.getPaymentStatus(id);
+    public PaymentController() {
     }
 
     @PostMapping // Empty means it maps exactly to "/api/v1/payments"
-    public String processPayment(@RequestBody PaymentRequest paymentRequest) {
+    public ResponseEntity<String> processPayment(@RequestBody PaymentRequest request) {
         String transactionId = UUID.randomUUID().toString();
-        TransactionResponse response = paymentService.processPayment(transactionId, paymentRequest.amount());
 
-        // Pass the transaction ID as the Kafka MESSAGE KEY (Second Parameter)
-        // Any event tied to a transaction (PAYMENT_INITIATED, SETTLED, or REFUNDED must use the same Kafka key
-        // to ensure the events are hashed to the same Kafka partition
-        kafkaTemplate.send(paymentTopic, transactionId, response);
-        return "Transaction queued: " + transactionId;
+        // Asynchronously queue the transaction for batching by Card ID
+        Transaction internalTx = new Transaction(
+                transactionId,
+                request.cardId(),
+                request.amount()
+        );
+        batchManager.queueTransaction(internalTx);
+
+        return ResponseEntity.accepted().body("Transaction " + transactionId + " accepted for batch processing");
     }
 }
