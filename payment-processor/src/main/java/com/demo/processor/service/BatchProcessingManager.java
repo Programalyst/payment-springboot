@@ -24,10 +24,14 @@ public class BatchProcessingManager {
     }
 
     private void flushBatch(String cardId, BlockingQueue<Transaction> queue) {
-        if (queue.isEmpty()) return;
 
-        List<Transaction> batch = new ArrayList<>();
-        queue.drainTo(batch);
+        // OPTIMIZED: Allocation-free ArrayList
+        int queueSize = queue.size();
+        if (queueSize == 0) return;
+
+        List<Transaction> batch = new ArrayList<>(queueSize); // Instantly allocates the exact size needed
+        // BlockingQueue.drainTo() Requires a Collection. If we used an array, we would have to use poll()
+        queue.drainTo(batch); // don't use queue.poll() as it blocks
 
         if (!batch.isEmpty()) {
             // Process the batch for this specific card
