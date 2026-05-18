@@ -1,0 +1,38 @@
+services:
+  # --- KAFKA INFRASTRUCTURE ---
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: processor-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://localhost:9092'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:9093'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+
+  # --- OFFICIAL APACHE SPARK CLUSTER (FREE & PATCHED) ---
+  spark-master:
+    image: apache/spark:3.5.8
+    container_name: processor-spark-master
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    # The official image uses standard bash execution entrypoints instead of env flags
+    command: /opt/spark/sbin/start-master.sh
+    environment:
+      - SPARK_NO_DAEMONIZE=true # Keeps the container running in the foreground
+
+  spark-worker:
+    image: apache/spark:3.5.8
+    container_name: processor-spark-worker
+    depends_on:
+      - spark-master
+    command: /opt/spark/sbin/start-worker.sh spark://spark-master:7077
+    environment:
+      - SPARK_NO_DAEMONIZE=true
