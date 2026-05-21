@@ -74,7 +74,7 @@ Now, the ParallelBatchProcessor takes that list of transactions for Card 123 and
 
 1. **Single Database Read:** It queries the mock database exactly once to get the current balance and the current schema version (e.g., Balance: $5000, Version: 1).
 
-2. **In-Memory Ledger Loop:** It loops through all transactions in the batch locally in memory. It applies your singleton validators, deducts the amounts, and updates the state of each transaction object to APPROVED or DECLINED.
+2. **In-Memory Ledger Loop:** It loops through all transactions in the batch locally in memory. It applies singleton validators, deducts the amounts, and updates the state of each transaction object to APPROVED or DECLINED.
 
 3. **The Optimistic Concurrency Write (OCC):** Once the loop is done, it attempts to write the final balance back to the database using computeIfPresent(). It checks: "Is the database version still 1?"
    - If YES (Success): It saves the new balance, changes the version to 2, and streams all 3,000 processed events to Kafka in one go.

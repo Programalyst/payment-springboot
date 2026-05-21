@@ -3,9 +3,7 @@ package com.demo.processor;
 import com.demo.processor.dto.PaymentRequest;
 import com.demo.processor.model.Transaction;
 import com.demo.processor.service.BatchProcessingManager;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
