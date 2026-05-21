@@ -24,6 +24,7 @@ public class TransactionAnalyticsApp {
                 .format("kafka")
                 .option("kafka.bootstrap.servers", "localhost:9092")
                 .option("subscribe", "payment-topic")
+                .option("kafka.group.id", "spark-payment-analytics-group") // Unique ID for this consumer group
                 .option("startingOffsets", "earliest")
                 .load(); // This terminates the configuration map cleanly
 
@@ -33,7 +34,6 @@ public class TransactionAnalyticsApp {
                 .add("status", DataTypes.StringType, false)
                 .add("amount", DataTypes.DoubleType, false)
                 .add("processedBy", DataTypes.StringType, true);
-
 
         // 4. Transform raw binary bytes into Structured Columns
         Dataset<Row> structuredTransactions = rawKafkaStream
